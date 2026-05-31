@@ -1,0 +1,13 @@
+{
+  "tests": [
+    {
+      "name": "Submit contact form",
+      "method": "POST",
+      "path": "/",
+      "body": {"name": "Тест", "email": "test@test.ru", "message": "Тестовое сообщение"},
+      "expectedStatus": 200,
+      "expectedBody": {"success": true},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

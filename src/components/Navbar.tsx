@@ -37,6 +37,7 @@ export default function Navbar() {
           <a className="px-4 py-2 text-white/70 hover:text-white transition-colors cursor-pointer" href="#about">О сервисе</a>
           <a className="px-4 py-2 text-white/70 hover:text-white transition-colors cursor-pointer" href="#features">Функции</a>
           <a className="px-4 py-2 text-white/70 hover:text-white transition-colors cursor-pointer" href="#pricing">Тарифы</a>
+          <a className="px-4 py-2 text-white/70 hover:text-white transition-colors cursor-pointer" href="#blog">Блог</a>
           <a className="px-4 py-2 text-white/70 hover:text-white transition-colors cursor-pointer" href="#contact">Контакты</a>
         </div>
 
@@ -95,6 +96,7 @@ export default function Navbar() {
                 { href: "#about", label: "О сервисе" },
                 { href: "#features", label: "Функции" },
                 { href: "#pricing", label: "Тарифы" },
+                { href: "#blog", label: "Блог" },
                 { href: "#contact", label: "Контакты" },
               ].map((item) => (
                 <a

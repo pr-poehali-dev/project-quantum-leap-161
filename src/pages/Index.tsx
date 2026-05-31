@@ -1,7 +1,10 @@
 import GradientBlinds from "@/components/GradientBlinds"
 import Navbar from "@/components/Navbar"
 import Icon from "@/components/ui/icon"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+
+const BLOG_URL = "https://functions.poehali.dev/7576c8e0-552b-43fe-a95d-f67f951bbe98"
+const CONTACT_URL = "https://functions.poehali.dev/6d97f166-1267-49d9-9973-c01d4c8cb0a0"
 
 const features = [
   {
@@ -84,13 +87,81 @@ const plans = [
   },
 ]
 
+interface BlogPost {
+  id: number
+  title: string
+  slug: string
+  excerpt: string
+  category: string
+  read_time: number
+  created_at: string
+}
+
+const categoryColors: Record<string, string> = {
+  "Бюджет": "border-blue-400/30 text-blue-300 bg-blue-500/10",
+  "Советы": "border-emerald-400/30 text-emerald-300 bg-emerald-500/10",
+  "Накопления": "border-purple-400/30 text-purple-300 bg-purple-500/10",
+  "Инвестиции": "border-orange-400/30 text-orange-300 bg-orange-500/10",
+}
+
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr)
+  return d.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })
+}
+
 export default function Index() {
   const [formData, setFormData] = useState({ name: "", email: "", message: "" })
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [formError, setFormError] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [posts, setPosts] = useState<BlogPost[]>([])
+  const [blogLoading, setBlogLoading] = useState(true)
+  const [expandedPost, setExpandedPost] = useState<number | null>(null)
+  const [postContent, setPostContent] = useState<Record<number, string>>({})
+
+  useEffect(() => {
+    fetch(BLOG_URL)
+      .then((r) => r.json())
+      .then((data) => setPosts(data))
+      .catch(() => setPosts([]))
+      .finally(() => setBlogLoading(false))
+  }, [])
+
+  const handleReadMore = async (post: BlogPost) => {
+    if (expandedPost === post.id) {
+      setExpandedPost(null)
+      return
+    }
+    if (!postContent[post.id]) {
+      const res = await fetch(`${BLOG_URL}?slug=${post.slug}`)
+      const data = await res.json()
+      setPostContent((prev) => ({ ...prev, [post.id]: data.content }))
+    }
+    setExpandedPost(post.id)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSubmitted(true)
+    setSubmitting(true)
+    setFormError("")
+    try {
+      const res = await fetch(CONTACT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSubmitted(true)
+      } else {
+        setFormError(data.error || "Ошибка. Попробуйте ещё раз.")
+      }
+    } catch {
+      setFormError("Ошибка сети. Попробуйте ещё раз.")
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -149,7 +220,7 @@ export default function Index() {
                 <Icon name="ArrowRight" size={20} />
               </a>
             </div>
-            <div className="flex items-center gap-6 mt-4 text-white/60 text-sm">
+            <div className="flex flex-wrap justify-center items-center gap-6 mt-4 text-white/60 text-sm">
               <div className="flex items-center gap-1.5">
                 <Icon name="Check" size={16} className="text-emerald-400" />
                 Бесплатный тариф навсегда
@@ -263,7 +334,7 @@ export default function Index() {
                   }`}
                 >
                   {plan.highlight && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-blue-500 to-emerald-500 px-4 py-1 text-xs font-semibold text-white">
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-blue-500 to-emerald-500 px-4 py-1 text-xs font-semibold text-white whitespace-nowrap">
                       Популярный
                     </div>
                   )}
@@ -296,6 +367,83 @@ export default function Index() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* ─── Blog ─── */}
+        <section id="blog" className="py-24 px-5 sm:px-20">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-1.5 text-sm text-emerald-300 mb-6">
+                <Icon name="BookOpen" size={14} />
+                Блог
+              </div>
+              <h2 className="text-4xl font-bold text-white mb-4">
+                Статьи о финансах
+              </h2>
+              <p className="text-white/60 text-lg max-w-xl mx-auto">
+                Простые и понятные материалы о том, как управлять деньгами грамотно.
+              </p>
+            </div>
+
+            {blogLoading ? (
+              <div className="grid md:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="rounded-2xl border border-white/10 bg-white/5 p-6 animate-pulse">
+                    <div className="h-4 bg-white/10 rounded mb-3 w-1/3" />
+                    <div className="h-6 bg-white/10 rounded mb-3" />
+                    <div className="h-4 bg-white/10 rounded mb-2 w-full" />
+                    <div className="h-4 bg-white/10 rounded w-2/3" />
+                  </div>
+                ))}
+              </div>
+            ) : posts.length === 0 ? (
+              <div className="text-center text-white/50 py-12">Статьи скоро появятся</div>
+            ) : (
+              <div className="grid md:grid-cols-3 gap-6">
+                {posts.map((post) => {
+                  const catStyle = categoryColors[post.category] || "border-white/20 text-white/60 bg-white/5"
+                  const isOpen = expandedPost === post.id
+                  return (
+                    <div
+                      key={post.id}
+                      className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden flex flex-col transition-all hover:border-white/20"
+                    >
+                      <div className="p-6 flex flex-col flex-1">
+                        <div className="flex items-center justify-between mb-4">
+                          <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${catStyle}`}>
+                            {post.category}
+                          </span>
+                          <span className="flex items-center gap-1 text-white/40 text-xs">
+                            <Icon name="Clock" size={12} />
+                            {post.read_time} мин
+                          </span>
+                        </div>
+                        <h3 className="text-white font-bold text-lg mb-3 leading-snug">{post.title}</h3>
+                        <p className="text-white/60 text-sm leading-relaxed flex-1">{post.excerpt}</p>
+
+                        {isOpen && postContent[post.id] && (
+                          <div className="mt-4 pt-4 border-t border-white/10 text-white/70 text-sm leading-relaxed">
+                            {postContent[post.id]}
+                          </div>
+                        )}
+
+                        <div className="mt-5 flex items-center justify-between">
+                          <span className="text-white/30 text-xs">{formatDate(post.created_at)}</span>
+                          <button
+                            onClick={() => handleReadMore(post)}
+                            className="flex items-center gap-1.5 text-emerald-400 text-sm font-medium hover:text-emerald-300 transition-colors"
+                          >
+                            {isOpen ? "Свернуть" : "Читать"}
+                            <Icon name={isOpen ? "ChevronUp" : "ChevronDown"} size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </section>
 
@@ -358,11 +506,16 @@ export default function Index() {
                     className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-emerald-400/50 transition-colors resize-none"
                   />
                 </div>
+                {formError && (
+                  <p className="text-red-400 text-sm">{formError}</p>
+                )}
                 <button
                   type="submit"
-                  className="self-start rounded-full bg-gradient-to-r from-blue-500 to-emerald-500 px-8 py-3 font-semibold text-white hover:opacity-90 transition-all shadow-lg shadow-emerald-900/30"
+                  disabled={submitting}
+                  className="self-start rounded-full bg-gradient-to-r from-blue-500 to-emerald-500 px-8 py-3 font-semibold text-white hover:opacity-90 transition-all shadow-lg shadow-emerald-900/30 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  Отправить сообщение
+                  {submitting && <Icon name="Loader2" size={16} className="animate-spin" />}
+                  {submitting ? "Отправляю..." : "Отправить сообщение"}
                 </button>
               </form>
             )}
