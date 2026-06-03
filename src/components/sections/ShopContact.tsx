@@ -1,4 +1,20 @@
+import { useRef, useEffect } from "react"
 import Icon from "@/components/ui/icon"
+
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { el.classList.add("revealed"); observer.unobserve(el) } },
+      { threshold: 0.1 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+  return ref
+}
 
 const features = [
   { icon: "CreditCard", label: "Оплата картой" },
@@ -11,13 +27,16 @@ const features = [
 ]
 
 export default function ShopContact() {
+  const leftRef = useReveal()
+  const rightRef = useReveal()
+
   return (
     <section id="contact" className="py-24 px-6 sm:px-16">
       <div className="max-w-6xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-12">
 
           {/* Left */}
-          <div>
+          <div ref={leftRef} className="reveal-left">
             <p className="text-white/40 text-xs uppercase tracking-widest mb-3">Контакты</p>
             <h2 className="text-4xl sm:text-5xl font-light text-white tracking-tight mb-10">
               Приходите<br />или звоните
@@ -64,8 +83,8 @@ export default function ShopContact() {
             </div>
           </div>
 
-          {/* Right — map placeholder */}
-          <div className="rounded-2xl border border-white/5 bg-white/[0.03] overflow-hidden min-h-80 flex flex-col">
+          {/* Right — map */}
+          <div ref={rightRef} className="reveal reveal-scale rounded-2xl border border-white/5 bg-white/[0.03] overflow-hidden min-h-80 flex flex-col">
             <iframe
               title="Шиповник на карте"
               src="https://yandex.ru/map-widget/v1/?ll=39.714890%2C47.229466&z=16&pt=39.714890%2C47.229466,pm2rdm"

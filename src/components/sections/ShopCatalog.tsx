@@ -1,3 +1,4 @@
+import { useRef, useEffect, type RefObject } from "react"
 import Icon from "@/components/ui/icon"
 
 const products = [
@@ -73,11 +74,30 @@ const tagColors: Record<string, string> = {
   "Сезонная": "bg-amber-50/10 text-amber-300 border-amber-300/20",
 }
 
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { el.classList.add("revealed"); observer.unobserve(el) } },
+      { threshold: 0.1 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+  return ref
+}
+
 export default function ShopCatalog() {
+  const headRef = useReveal()
+  const gridRef = useReveal()
+  const bannerRef = useReveal()
+
   return (
     <section id="catalog" className="py-24 px-6 sm:px-16">
       <div className="max-w-6xl mx-auto">
-        <div className="mb-14">
+        <div ref={headRef} className="reveal mb-14">
           <p className="text-white/40 text-xs uppercase tracking-widest mb-3">Каталог</p>
           <h2 className="text-4xl sm:text-5xl font-light text-white tracking-tight">
             Наши цветы
@@ -87,11 +107,14 @@ export default function ShopCatalog() {
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-white/5 rounded-2xl overflow-hidden border border-white/5">
+        <div
+          ref={gridRef}
+          className="stagger grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-white/5 rounded-2xl overflow-hidden border border-white/5"
+        >
           {products.map((p) => (
             <div
               key={p.name}
-              className="bg-[#0e0e0e] p-6 flex flex-col gap-4 hover:bg-white/[0.03] transition-colors group"
+              className="bg-[#0e0e0e] p-6 flex flex-col gap-4 hover:bg-white/[0.04] transition-colors duration-300 group"
             >
               <div className="flex items-start justify-between gap-2">
                 <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs ${tagColors[p.tag]}`}>
@@ -101,7 +124,7 @@ export default function ShopCatalog() {
               </div>
 
               <div className="flex-1">
-                <h3 className="text-white font-medium text-base leading-snug mb-2">{p.name}</h3>
+                <h3 className="text-white font-medium text-base leading-snug mb-2 group-hover:text-rose-200 transition-colors duration-300">{p.name}</h3>
                 <p className="text-white/40 text-sm font-light leading-relaxed">{p.description}</p>
               </div>
 
@@ -112,7 +135,7 @@ export default function ShopCatalog() {
                 </div>
                 <a
                   href="tel:+79094394343"
-                  className="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:border-white/30 transition-all group-hover:border-white/20"
+                  className="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:border-white/40 hover:bg-white/5 transition-all duration-300"
                 >
                   <Icon name="Phone" size={14} />
                 </a>
@@ -121,14 +144,14 @@ export default function ShopCatalog() {
           ))}
         </div>
 
-        <div className="mt-8 rounded-2xl border border-rose-300/10 bg-rose-50/5 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div ref={bannerRef} className="reveal mt-8 rounded-2xl border border-rose-300/10 bg-rose-50/5 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <p className="text-white font-medium mb-1">Нужен особый букет?</p>
             <p className="text-white/50 text-sm font-light">Соберём любую композицию под ваш запрос и бюджет</p>
           </div>
           <a
             href="tel:+79094394343"
-            className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-medium text-neutral-900 hover:bg-white/90 transition-all whitespace-nowrap"
+            className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-medium text-neutral-900 hover:bg-white/90 hover:gap-3 transition-all duration-300 whitespace-nowrap"
           >
             <Icon name="Phone" size={14} />
             Позвонить

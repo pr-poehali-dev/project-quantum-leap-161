@@ -1,5 +1,20 @@
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import Icon from "@/components/ui/icon"
+
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { el.classList.add("revealed"); observer.unobserve(el) } },
+      { threshold: 0.08 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+  return ref
+}
 
 const reviews = [
   { name: "Алина", level: 9, date: "14 марта", text: "Лучший магазин. Замечательные флористы 🌷" },
@@ -32,11 +47,13 @@ const VISIBLE = 6
 export default function ShopReviews() {
   const [showAll, setShowAll] = useState(false)
   const displayed = showAll ? reviews : reviews.slice(0, VISIBLE)
+  const headRef = useReveal()
+  const gridRef = useReveal()
 
   return (
     <section id="reviews" className="py-24 px-6 sm:px-16">
       <div className="max-w-6xl mx-auto">
-        <div className="mb-14 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+        <div ref={headRef} className="reveal mb-14 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
           <div>
             <p className="text-white/40 text-xs uppercase tracking-widest mb-3">Отзывы</p>
             <h2 className="text-4xl sm:text-5xl font-light text-white tracking-tight">
@@ -55,11 +72,11 @@ export default function ShopReviews() {
           </div>
         </div>
 
-        <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
+        <div ref={gridRef} className="stagger columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
           {displayed.map((r) => (
             <div
               key={r.name + r.date}
-              className="break-inside-avoid rounded-2xl border border-white/5 bg-white/[0.03] p-6 hover:bg-white/[0.05] transition-colors"
+              className="break-inside-avoid rounded-2xl border border-white/5 bg-white/[0.03] p-6 hover:bg-white/[0.06] hover:border-white/10 transition-all duration-300"
             >
               <div className="flex items-start justify-between mb-4">
                 <div>
@@ -82,7 +99,7 @@ export default function ShopReviews() {
           <div className="mt-8 text-center">
             <button
               onClick={() => setShowAll(true)}
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm text-white/60 hover:text-white hover:border-white/20 transition-all"
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm text-white/60 hover:text-white hover:border-white/20 transition-all duration-300"
             >
               Показать все {reviews.length} отзывов
               <Icon name="ChevronDown" size={16} />
